@@ -340,7 +340,7 @@ if (playerSearch) playerSearch.addEventListener('input', () => {
   if (!value) {
     if (activeSearchController) activeSearchController.abort();
     listHeading.textContent = 'My friends (2)';
-    playerResults.innerHTML = '<div class="roblox-player-row static-friend"><span class="roblox-player-avatar friend-cat">M</span><span class="roblox-player-name">Myst1c</span><span class="roblox-mini-robux">P</span></div><div class="roblox-player-row static-friend"><span class="roblox-player-avatar friend-user">A</span><span class="roblox-player-name">Aniketyt</span></div>';
+    playerResults.innerHTML = '<div class="roblox-player-row static-friend"><img class="roblox-player-avatar" src="/avatars/myst1c.jpg" alt="Myst1c avatar"><span class="roblox-player-name">Myst1c</span><span class="roblox-mini-robux" aria-label="Robux">◇</span></div><div class="roblox-player-row static-friend"><img class="roblox-player-avatar" src="/avatars/aniketyt.jpg" alt="Aniketyt avatar"><span class="roblox-player-name">Aniketyt</span></div>';
     searchStatus.textContent = '';
     selectedRobloxUser = null;
     return;
@@ -377,8 +377,8 @@ if (playerSearch) playerSearch.addEventListener('input', () => {
 </label>
 <h3 id="sendRobuxListHeading">My friends (2)</h3>
 <div class="roblox-player-results" id="robloxPlayerResults">
-<div class="roblox-player-row static-friend"><span class="roblox-player-avatar friend-cat">M</span><span class="roblox-player-name">Myst1c</span><span class="roblox-mini-robux">P</span></div>
-<div class="roblox-player-row static-friend"><span class="roblox-player-avatar friend-user">A</span><span class="roblox-player-name">Aniketyt</span></div>
+<div class="roblox-player-row static-friend"><img class="roblox-player-avatar" src="/avatars/myst1c.jpg" alt="Myst1c avatar"><span class="roblox-player-name">Myst1c</span><span class="roblox-mini-robux" aria-label="Robux">◇</span></div>
+<div class="roblox-player-row static-friend"><img class="roblox-player-avatar" src="/avatars/aniketyt.jpg" alt="Aniketyt avatar"><span class="roblox-player-name">Aniketyt</span></div>
 </div>
 <p aria-live="polite" class="roblox-search-status" id="robloxSearchStatus"></p>
 </div>
