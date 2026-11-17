@@ -1,68 +1,50 @@
 export default async (request) => {
   const url = new URL(request.url);
   const keyword = (url.searchParams.get("keyword") || "").trim();
-
-  const json = (body, status = 200) => new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store"
-    }
-  });
-
-  if (keyword.length < 3) return json({ users: [] });
-
-  try {
-    const searchUrl = new URL("https://users.roblox.com/v1/users/search");
-    searchUrl.searchParams.set("keyword", keyword);
-    searchUrl.searchParams.set("limit", "10");
-
-    const searchResponse = await fetch(searchUrl, {
-      headers: { "accept": "application/json" }
+  if (request.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { "content-type": "application/json", "allow": "GET" }
     });
-
-    if (!searchResponse.ok) {
-      return json({ users: [], error: `Roblox search returned ${searchResponse.status}` }, 502);
-    }
-
+  }
+  if (keyword.length < 3 || keyword.length > 50) {
+    return new Response(JSON.stringify({ users: [] }), {
+      status: 200, headers: { "content-type": "application/json", "cache-control": "no-store" }
+    });
+  }
+  try {
+    const searchResponse = await fetch(
+      `https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(keyword)}&limit=10`,
+      { headers: { "accept": "application/json", "user-agent": "Mozilla/5.0" } }
+    );
+    if (!searchResponse.ok) throw new Error(`Roblox user search returned ${searchResponse.status}`);
     const searchData = await searchResponse.json();
-    const found = Array.isArray(searchData.data) ? searchData.data : [];
-    const ids = found.map(user => user.id).filter(Boolean);
-
-    // Avatar lookup is optional: a thumbnail failure must not break username search.
+    const users = Array.isArray(searchData.data) ? searchData.data : [];
+    const ids = users.map(u => u.id).filter(Boolean);
     let thumbnails = {};
     if (ids.length) {
-      try {
-        const thumbUrl = new URL("https://thumbnails.roblox.com/v1/users/avatar-headshot");
-        thumbUrl.searchParams.set("userIds", ids.join(","));
-        thumbUrl.searchParams.set("size", "150x150");
-        thumbUrl.searchParams.set("format", "Png");
-        thumbUrl.searchParams.set("isCircular", "true");
-
-        const thumbResponse = await fetch(thumbUrl, {
-          headers: { "accept": "application/json" }
-        });
-        if (thumbResponse.ok) {
-          const thumbData = await thumbResponse.json();
-          for (const item of (thumbData.data || [])) {
-            thumbnails[item.targetId] = item.imageUrl;
-          }
-        }
-      } catch (_) {
-        // Continue with usernames even if Roblox thumbnails are unavailable.
+      const thumbResponse = await fetch(
+        `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${ids.join(",")}&size=150x150&format=Png&isCircular=true`,
+        { headers: { "accept": "application/json", "user-agent": "Mozilla/5.0" } }
+      );
+      if (thumbResponse.ok) {
+        const thumbData = await thumbResponse.json();
+        for (const t of (thumbData.data || [])) thumbnails[t.targetId] = t.imageUrl;
       }
     }
-
-    const users = found.map(user => ({
-      id: user.id,
-      name: user.name,
-      displayName: user.displayName,
-      avatarUrl: thumbnails[user.id] || null,
-      hasVerifiedBadge: !!user.hasVerifiedBadge
+    const result = users.map(u => ({
+      id: u.id,
+      name: u.name,
+      displayName: u.displayName || u.name,
+      avatarUrl: thumbnails[u.id] || ""
     }));
-
-    return json({ users });
-  } catch (_) {
-    return json({ users: [], error: "Roblox user search is temporarily unavailable." }, 502);
+    return new Response(JSON.stringify({ users: result }), {
+      status: 200,
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Roblox search is temporarily unavailable", detail: String(error) }), {
+      status: 502,
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" }
+    });
   }
 };
